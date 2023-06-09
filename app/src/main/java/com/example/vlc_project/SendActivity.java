@@ -22,14 +22,13 @@ public class SendActivity extends AppCompatActivity {
     Button sendButton;
     TextView textView;
     ProgressBar progressBar;
-    int counter = 0;
     private CameraManager cameraManager;
     private String cameraId;
     private final int DOT_DURATION = 50; // Duration of a dot in milliseconds
     private final int DASH_DURATION = DOT_DURATION * 3; // Duration of a dash (3 dots)
     private final int SPACE_DURATION = DOT_DURATION * 7;
 
-    private final int LETTER_DURATION = DOT_DURATION * 3;
+    private final int CHARACTER_DURATION = DOT_DURATION * 3;
 
     // Morse code mappings
     private char[] characters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' '};
@@ -70,6 +69,7 @@ public class SendActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
+            //Convert characters to morse code
             StringBuilder morseData = new StringBuilder();
             for (int i = 0; i < data.length(); i++) {
                 char c = Character.toLowerCase(data.charAt(i));
@@ -81,8 +81,9 @@ public class SendActivity extends AppCompatActivity {
             }
             Log.d("developer", "morseData: " + morseData);
             String morseDataString = "-.-.- " + morseData + " .-.-";
-//        String morseDataString = "-.-.- ... --- ... ---  .-.-";
             Log.d("developer", "Modified morseData: " + morseDataString);
+
+            // Send morse code
             try {
                 for (int i = 0; i < morseDataString.length(); i++) {
                     char c = morseDataString.charAt(i);
@@ -98,7 +99,7 @@ public class SendActivity extends AppCompatActivity {
                         // Delay between words
                         Thread.sleep(SPACE_DURATION);
                     }
-                    Thread.sleep(LETTER_DURATION);
+                    Thread.sleep(CHARACTER_DURATION);
                     publishProgress((i + 1) * 100 / morseData.length());
                 }
                 turnFlashlightOff();
@@ -129,6 +130,7 @@ public class SendActivity extends AppCompatActivity {
         }
     }
 
+    // Returns morse code for a character
     private String getMorseCode(char c) {
         for (int i = 0; i < characters.length; i++) {
             if (c == characters[i]) {
@@ -138,6 +140,7 @@ public class SendActivity extends AppCompatActivity {
         return ""; // Return empty string for unsupported characters
     }
 
+    //Turn on flashlight
     private void turnFlashlightOn() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -158,6 +161,7 @@ public class SendActivity extends AppCompatActivity {
         }
     }
 
+    //Turn off flashlight
     private void turnFlashlightOff() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

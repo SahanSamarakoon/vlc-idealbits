@@ -46,6 +46,7 @@ public class CameraScreen extends CameraActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
+        //Load OpenCV
         if (OpenCVLoader.initDebug()) Log.d("LOADED", "Success");
         else Log.d("LOADED", "Err");
         Log.d("FLASH", "OnCreate");
@@ -59,7 +60,7 @@ public class CameraScreen extends CameraActivity {
             private int illuminatedFrameCount = 0;
             private int darkFrameCount = 0;
             private final StringBuilder morseCodeBuilder = new StringBuilder();
-            private int spaceCount = 0;
+            private int characterDurationCount = 0;
             private List<String> morseCodeList = new ArrayList<>();
             private List<String> wordList = new ArrayList<>();
 
@@ -90,7 +91,7 @@ public class CameraScreen extends CameraActivity {
 
                 double maxArea = 0;
 
-                // Iterate through all the detected contours
+                // Iterate through all the detected contours and find the contour with maximum area
                 for (int i = 0; i < contours.size(); i++) {
                     double area = contourArea(contours.get(i));
                     if (area > maxArea) {
@@ -104,32 +105,34 @@ public class CameraScreen extends CameraActivity {
                     illuminatedFrameCount++;
                     isFlashlightOn = true;
                     darkFrameCount = 0;
-                    spaceCount = 0;
+                    characterDurationCount = 0;
                 } else {
                     if (isFlashlightOn) {
                         if (illuminatedFrameCount >= 3) {
                             morseCodeBuilder.append('-');
-                            Log.d("developer", "Message: Appended - Dash && " + morseCodeBuilder.toString());
+                            Log.d("developer", "Message: Appended - Dash && " + morseCodeBuilder);
                         } else if (illuminatedFrameCount >= 1) {
                             morseCodeBuilder.append('.');
-                            Log.d("developer", "Message: Appended . Dot && " + morseCodeBuilder.toString());
+                            Log.d("developer", "Message: Appended . Dot && " + morseCodeBuilder);
                         } else morseCodeBuilder.append("");
-                        Log.d("developer", "Message: Appended nothing && " + morseCodeBuilder.toString());
+                        Log.d("developer", "Message: Appended nothing && " + morseCodeBuilder);
                     } else {
                         if (!morseCodeBuilder.toString().equals("")) {
                             darkFrameCount++;
                             Log.d("developer", "Message: darkFrameCount: " + darkFrameCount);
                             if (darkFrameCount >= 8) {
-                                spaceCount++;
-                                Log.d("developer", "Message: spaceCount: " + spaceCount);
-                                if (spaceCount >= 30) {
+                                characterDurationCount++;
+                                Log.d("developer", "Message: spaceCount: " + characterDurationCount);
+                                // Identify end of a word with space
+                                if (characterDurationCount >= 30) {
                                     morseCodeBuilder.append('_');
-                                    Log.d("developer", "Message: Appended _ Underscore && " + morseCodeBuilder.toString());
-                                    spaceCount = 0;
-                                } else if (spaceCount == 1 && !morseCodeBuilder.toString().endsWith("_")) {
+                                    Log.d("developer", "Message: Appended _ Underscore && " + morseCodeBuilder);
+                                    characterDurationCount = 0;
+                                    //Identify end of a character identification
+                                } else if (characterDurationCount == 1 && !morseCodeBuilder.toString().endsWith("_")) {
                                     morseCodeBuilder.append(' ');
-                                    Log.d("developer", "Message: Appended  Space && " + morseCodeBuilder.toString());
-                                    String[] characterList = morseCodeBuilder.toString().substring(0, morseCodeBuilder.length()).split(" ");
+                                    Log.d("developer", "Message: Appended  Space && " + morseCodeBuilder);
+                                    String[] characterList = morseCodeBuilder.substring(0, morseCodeBuilder.length()).split(" ");
                                     Log.d("test", "Message: characterList " + Arrays.toString(characterList));
                                     List<String> decodedCharacterList = new ArrayList<>();
                                     for (String character : characterList) {
@@ -158,6 +161,7 @@ public class CameraScreen extends CameraActivity {
                         //Check for start condition
                         if (morseCode.contains("-.-.- ")) {
                             Log.d("test", "Start Passed morseCode:" + morseCode);
+                            //Remove start and end symbols
                             morseCode = morseCode.substring(6, morseCode.length() - 5);
                             Log.d("developer", "Our Type morseCode modified:" + morseCode);
                             morseCodeList = Arrays.asList(morseCode.split("_"));
@@ -178,7 +182,7 @@ public class CameraScreen extends CameraActivity {
                     }
                 }
 
-                //Camera preview
+                //Camera Preview
                 Mat rgba = inputFrame.rgba();
                 Mat rotatedRgba = new Mat(rgba.cols(), rgba.rows(), CvType.CV_8UC4);
                 Point center = new Point(rgba.cols() / 2, rgba.rows() / 2);
@@ -216,6 +220,7 @@ public class CameraScreen extends CameraActivity {
         return Collections.singletonList(cameraBridgeViewBase);
     }
 
+    //Get Camera Permission
     void getPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -224,6 +229,7 @@ public class CameraScreen extends CameraActivity {
         }
     }
 
+    //Check Camera Permission
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -234,6 +240,7 @@ public class CameraScreen extends CameraActivity {
         }
     }
 
+    //Decode Morse Code into English Characters
     private String decodeMorseCode(String morseCode) {
         char[] characters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' '};
         String[] morseCodes = {".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", "-.-", ".-..", "--", "-.", "---", ".--.", "--.-", ".-.", "...", "-", "..-", "...-", ".--", "-..-", "-.--", "--..", " "};
